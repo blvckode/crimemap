@@ -1,3 +1,3 @@
-db_user = 'database_user'
-db_password = 'your_password'
+db_user = 'root'
+db_password = '7gngvu89'
 

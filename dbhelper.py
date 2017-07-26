@@ -4,8 +4,8 @@ import dbconfig
 class DBHelper:
     def connect(self, database = "crimemap"):
         return pymysql.connect(host="localhost",
-                               user=dbconfig.db_user,
-                               passwd=dbconfig.db_password,
+                               user= dbconfig.db_user,
+                               passwd= dbconfig.db_password,
                                db=database)
 
     def get_all_inputs(self):
@@ -13,18 +13,18 @@ class DBHelper:
         try:
             query = "SELECT description FROM crimes;"
             with connection.cursor() as cursor:
-                cursor.excute(query)
+                cursor.execute(query)
             return cursor.fetchall()
         finally:
             connection.close()
 
-    def add_input(self, date):
+    def add_input(self, data):
         connection = self.connect()
         try:
             # The following introduces a deliberate security flaw (SQL injection).
-            query = "INSERT INTO crimes (description) VALUES ('{}');".format(data)
+            query = "INSERT INTO crimes (description) VALUES (%s);"
             with connection.cursor() as cursor:
-                cursor.excute(query)
+                cursor.execute(query,data)
                 connection.commit()
         finally:
             connection.close()
@@ -34,7 +34,7 @@ class DBHelper:
         try:
             query = "DELETE FROM crimes;"
             with connection.cursor() as cursor:
-                cursor.excute(query)
+                cursor.execute(query)
                 connection.commit()
         finally:
             connection.close()
