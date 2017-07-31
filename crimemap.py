@@ -1,25 +1,45 @@
 from dbhelper import DBHelper
 from flask import Flask, render_template, request
+import json, datetime, dateparser, string
 
 app = Flask(__name__)
 DB = DBHelper()
 
-@app.route("/")
-def home():
-    try:
-        data = DB.get_all_inputs()
-    except Exception as e:
-        print e
-        data = None
-    return render_template("home.html", data = data)
+categories = ['mugging','break-in','rape','murder','assault','battery','kidnapping','homicide']
 
-@app.route("/add", methods=["POST"])
-def add():
+def format_date(userdate):
+    date = dateparser.parse(userdate)
     try:
-        data = request.form.get("userinput")
-        DB.add_input(data)
-    except Exception as e:
-        print e
+        return datetime.datetime.strftime(date, "%Y-%m-%d")
+    except TypeError:
+        return None
+
+def sanitize_string(userinput):
+    whitelist = string.letters + string.digits + "!?$.,;:-'()&"
+    return filter(lambda x: x in whitelist, userinput)
+
+@app.route("/")
+def home(error_message=None):
+    crimes = DB.get_all_crimes()
+    crimes = json.dumps(crimes)
+    return render_template("home.html", crimes = crimes, categories = categories,
+                           error_message = error_message)
+
+@app.route("/submitcrime", methods=['POST'])
+def submitcrime():
+    category = request.form.get("category")
+    if category not in categories:
+        return home()
+    date = request.form.get("date")
+    if not date:
+        return home("Invalid date. Please use yyyy-mm-dd format")
+    try:
+        latitude = float(request.form.get("latitude"))
+        longitude = float(request.form.get("longitude"))
+    except ValueError:
+        return home()
+    description = sanitize_string(request.form.get("description"))
+    DB.add_crime(category,date, latitude, longitude, description)
     return home()
 
 @app.route("/clear")

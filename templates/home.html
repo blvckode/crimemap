@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-      <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/style.css')}}">
+      <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/style.css')}}" >
     <script type="text/javascript"
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOZVsb0V6s24HL0GDPx_yjmKzXHF9I8WE">
     </script>
@@ -11,7 +11,7 @@
         var marker;
       function initialize() {
           var mapOptions = {
-              center: new google.maps.LatLng(-33.30578381949298,26.523442268371582),
+              center: new google.maps.LatLng(4.904203, -1.759872),
               zoom : 15,
               draggable: false,
               scrollwheel: false,
@@ -23,7 +23,18 @@
         google.maps.event.addListener(map, 'click', function(event) {
           placeMarker(event.latLng);
         });
+        placeCrimes({{ crimes | safe }});
 
+      }
+
+      function placeCrimes(crimes) {
+          for (i=0; i<crimes.length; i++) {
+              crime = new google.maps.Marker( {
+                  position: new google.maps.LatLng(crimes[i].latitude, crimes[i].longitude),
+                  map: map,
+                  title: crimes[i].date + "\n" + crimes[i].category + "\n" + crimes[i].description
+              });
+          }
       }
 
       function placeMarker(location) {
@@ -42,26 +53,32 @@
     </script>
   </head>
   <body onload="initialize()">
-  <h1>CrimeMap</h1>
-  <p>A map of recent criminal activity in the SinCity area.</p>
+  <div id="header">
+  <a href="/"><h1>CrimeMap</h1></a>
+  <p>A map of recent criminal activity in SinCity</p></div>
     <div id="map-canvas"></div>
 
   <div id="newcrimeform">
       <h2>Submit new crime</h2>
+      {% if error_message %}
+        <div id="error"><p>{{error_message}}</p></div>
+      {% endif %}
       <form action="/submitcrime" method="POST">
           <label for="category">Category</label>
           <select name="category" id="category">
-              <option value="mugging">Mugging</option>
-              <option value="breakin">Break-in</option>
+              {% for category in categories %}
+                    <option value="{{category}}">{{category}}</option>
+              {% endfor %}
           </select>
           <label for="date">Date</label>
           <input name="date" id="date" type="date">
           <label for="latitude">Latitude</label>
-          <input name="latitude" id="latitude" type="text">
+          <input name="latitude" id="latitude" type="text" placeholder="click on crime location on map" readonly>
           <label for="longitude">Longitude</label>
-          <input name="longitude" id="longitude" type="text">
+          <input name="longitude" id="longitude" type="text" placeholder="click on crime location on map" readonly>
           <label for="description"> Description</label>
-          <textarea name="description" id="description" placeholder="A brief but detailed description of the crime"></textarea>
+          <textarea name="description" id="description" placeholder="A brief but detailed description of the crime"
+                    rows="5" required></textarea>
           <input type="submit" value="Submit">
       </form>
   </div>
